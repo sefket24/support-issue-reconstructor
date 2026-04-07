@@ -153,9 +153,9 @@ Pre-built test cases are available in `/examples/sample_cases.json`. Each case i
 
 ### Live Demo
 
-This app can be deployed via Streamlit Community Cloud.
+This app is deployed via Streamlit Community Cloud.
 
-[Add deployed URL here]
+👉 [https://support-issue-reconstructor.streamlit.app](https://support-issue-reconstructor.streamlit.app)
 
 ---
 
