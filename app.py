@@ -1,133 +1,75 @@
 import streamlit as st
 
-st.set_page_config(page_title="Support Issue Reconstructor")
+st.set_page_config(page_title="Support Issue Reconstructor", layout="wide")
 
-# --- Top Header ---
+# Header
 st.markdown("""
-<div style="
-    background-color: #0f172a;
-    padding: 20px 24px;
-    border-radius: 12px;
-    color: white;
-    margin-bottom: 20px;
-">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 20px; font-weight: 600;">
-            🤝 Support Issue Reconstructor
-        </div>
-        <div style="font-size: 12px; opacity: 0.7;">
-            Product Support · Internal Tool
-        </div>
-    </div>
+<div style="background:#0f172a;padding:16px 20px;border-radius:10px;color:white;">
+<b>Support Issue Reconstructor</b>
+<span style="float:right;font-size:12px;opacity:0.7;">Product Support | Internal Tool</span>
 </div>
 """, unsafe_allow_html=True)
 
-# --- Banner Card ---
+# Banner
 st.markdown("""
-<div style="
-    background-color: #fef9c3;
-    padding: 18px;
-    border-radius: 10px;
-    border: 1px solid #fde68a;
-    margin-bottom: 25px;
-">
-    <div style="font-size: 14px;">
-        👋 <strong>Hey, hiring team!</strong> This is a portfolio project by <strong>Sef Nouri</strong> — a working support tool that simulates how SaaS teams turn messy user issues into structured, reproducible bug reports for engineering.
-        <br><br>
-        Feel free to test it with a real support message.
-    </div>
-
-    <div style="margin-top: 12px;">
-        <a href="https://github.com/sefket24/support-issue-reconstructor" target="_blank"
-            style="text-decoration: none; margin-right: 10px;">
-            <button style="
-                padding: 6px 12px;
-                border-radius: 6px;
-                border: 1px solid #cbd5e1;
-                background-color: white;
-                cursor: pointer;
-            ">
-                ⌥ GitHub
-            </button>
-        </a>
-
-        <a href="https://www.linkedin.com/in/sefketnouri/" target="_blank"
-            style="text-decoration: none;">
-            <button style="
-                padding: 6px 12px;
-                border-radius: 6px;
-                border: 1px solid #cbd5e1;
-                background-color: white;
-                cursor: pointer;
-            ">
-                in LinkedIn
-            </button>
-        </a>
-    </div>
+<div style="background:#fef3c7;padding:14px;border-radius:8px;margin-top:12px;">
+<b>Hey, hiring team!</b> This simulates how SaaS support turns messy user issues into structured bug reports.
+<br><br>
+<a href="https://github.com/sefket24/support-issue-reconstructor" target="_blank">GitHub</a> | 
+<a href="https://www.linkedin.com/in/sefketnouri/" target="_blank">LinkedIn</a>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown(
-"""
-Paste a real user message below.  
-This tool translates unclear support tickets into structured, reproducible issues for engineering.
-"""
-)
+st.markdown("### Try it")
 
-# --- Intake ---
-st.header("1. User Issue")
+# Sample autofill
+if st.button("Try a sample issue"):
+    st.session_state["user_issue"] = "Users report a blank screen when opening shared link"
+    st.session_state["browser"] = "Chrome"
+    st.session_state["os"] = "macOS"
+    st.session_state["auth"] = "Logged out"
+    st.session_state["frequency"] = "Always"
 
-user_issue = st.text_area("User message (raw)", placeholder="Paste the user's message here...")
+# Inputs
+user_issue = st.text_area("User issue", key="user_issue")
 
 col1, col2 = st.columns(2)
+browser = col1.text_input("Browser", key="browser")
+os = col2.text_input("OS", key="os")
 
-with col1:
-    browser = st.text_input("Browser (required)")
+auth = st.selectbox("Auth", ["Logged in","Logged out","Unknown"], key="auth")
+frequency = st.selectbox("Frequency", ["Always","Intermittent","Once"], key="frequency")
 
-with col2:
-    os = st.text_input("Operating System (required)")
+hypothesis = st.text_area("Hypothesis")
+steps = st.text_area("Steps tried")
 
-auth = st.selectbox("Auth State", ["Select...", "Logged in", "Logged out", "Unknown"])
-frequency = st.selectbox("Frequency", ["Select...", "Always", "Intermittent", "Once"])
-
-# --- Investigation ---
-st.header("2. Investigation")
-
-hypothesis = st.text_area("What do you suspect?")
-steps_taken = st.text_area("What have you tried?")
-
-# --- Output ---
-st.header("3. Structured Output")
-
-if st.button("Generate Report"):
-    if not user_issue or not browser or not os or auth == "Select..." or frequency == "Select...":
-        st.error("Fill in all required fields before generating the report.")
+# Output
+if st.button("Generate"):
+    if not user_issue or not browser or not os:
+        st.error("Fill required fields")
     else:
-        report = f"""
-STEPS TO REPRODUCE
-1. ...
-2. ...
+        st.markdown("## Ticket Output")
 
-EXPECTED
-...
+        st.markdown(f'''
+<div style="border:1px solid #e5e7eb;padding:16px;border-radius:10px;background:white;">
 
-ACTUAL
-...
+<b>Steps to Reproduce</b>
+<ul>
+<li>Open link</li>
+<li>Observe issue</li>
+</ul>
 
-ENVIRONMENT
-Browser: {browser}
-OS: {os}
-Auth: {auth}
-Frequency: {frequency}
+<b>Expected</b>
+<p>Feature works normally</p>
 
-NOTES FOR ENGINEERING
-User issue: {user_issue}
+<b>Actual</b>
+<p>Issue occurs</p>
 
-Hypothesis:
-{hypothesis}
+<b>Environment</b>
+<p>{browser} | {os} | {auth}</p>
 
-Steps taken:
-{steps_taken}
-"""
-        st.code(report)
-        st.download_button("Download Report", report, file_name="support_issue.txt")
+<b>Notes</b>
+<p>{hypothesis}</p>
+
+</div>
+''', unsafe_allow_html=True)
