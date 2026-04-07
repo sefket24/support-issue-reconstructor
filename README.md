@@ -1,164 +1,125 @@
-# 🔍 Reducing Ambiguity in Complex Support Workflows
+## I turn vague user issues into structured, reproducible bugs that engineering teams can act on
 
-> AI-powered issue triage and response drafting for SaaS support teams — built with Python, Streamlit, and OpenAI.
+In product support, most issues don’t arrive clearly.
 
-**Live demo:** [support-issue-reconstructor.streamlit.app](https://support-issue-reconstructor.streamlit.app/)
+Users describe symptoms, not causes.  
+Reproducing the issue is often the hardest part.  
+Engineering needs precision, not guesswork.
 
----
-
-## Context
-
-Modern SaaS products increasingly involve:
-
-- Multiple users interacting with shared resources
-- Layered abstractions (components, automations, integrations)
-- Asynchronous changes across systems
-
-These environments make issues difficult to reproduce, attribute, and explain clearly. A single inbound ticket might touch three different subsystems, involve two user roles, and arrive with just enough detail to be confusing — but not enough to act on.
+This project focuses on that gap:
+taking unclear user reports and turning them into structured, actionable issues.
 
 ---
 
-## Problem
+### What this tool does
 
-Support teams processing high volumes of complex, ambiguous tickets face a consistent set of challenges. Manually reviewing each one is:
-
-- Time-consuming for support agents
-- Inconsistent across team members
-- Hard to scale as request volume grows
-
----
-
-## Solution
-
-This tool provides an AI-powered first-pass review. An agent pastes an incoming ticket (or fills out the intake form), and the assistant instantly returns:
-
-- A **classification** (Actionable / Needs Clarification / Out of Scope)
-- A **reasoning summary** explaining the decision
-- A **tone analysis** of the reporter
-- A **suggested reply** ready to copy and send
-- **Tags** for categorization and routing
-
-This frees support agents to focus on edge cases, exceptions, and relationship-building — not repetitive triage.
+- Converts messy user input into structured bug reports  
+- Guides investigation through hypotheses and checks  
+- Outputs:
+  - steps to reproduce  
+  - expected vs actual behavior  
+  - environment details  
 
 ---
 
-## How It Works
+### What I focus on in support
 
-1. The support agent fills in the intake form:
-   - Product area or context
-   - Reporter email
-   - Free-text description of the issue
-   - Checkbox confirming supporting evidence has been provided
-
-2. On submission, a structured prompt is sent to the OpenAI API (`gpt-4o-mini`).
-
-3. The model returns a JSON object with classification, reasoning, tone, suggested response, and tags.
-
-4. Results are displayed in a clean side-by-side layout with color-coded status badges.
+- Is this actually a bug or expected behavior?  
+- Can I reliably reproduce this issue?  
+- What variables matter (environment, permissions, state)?  
+- How do I communicate this clearly to engineering?  
 
 ---
 
-## Example Input / Output
+## Sample Support Case
 
-**Input:**
-- Context: `Collaborative canvas tool, 12-seat team`
-- Email: `ops@examplecorp.com`
-- Message: *"One of our users says changes they made aren't showing up for others on the team. It was working yesterday. We haven't changed any settings."*
-- Evidence provided: ✅ Yes (screen recording attached)
+### User Report (Raw)
 
-**Output:**
-```json
-{
-  "classification": "needs_clarification",
-  "reasoning": "The issue likely involves a sync or permission layer, but the ticket lacks detail on which feature area, user role affected, and whether the problem is consistent or intermittent. A targeted follow-up will accelerate resolution.",
-  "tone": "Calm but concerned — reporting on behalf of another user",
-  "suggested_response": "Thanks for reaching out and for attaching the recording — that's helpful. To investigate further, could you confirm which canvas feature this affects and whether the issue is happening for all team members or just one? Once we have that, we can identify whether this is a sync, permission, or session issue and get it resolved quickly.",
-  "tags": ["sync-issue", "multi-user", "needs-repro-steps", "collaborative-feature"]
-}
-```
+> “Hey, something’s off with our prototype. Some teammates can open the link, others just see a blank screen. We didn’t change anything.”
 
 ---
 
-## Setup Instructions
+### Investigation
 
-### 1. Clone the repository
+**Initial read**
+- Inconsistent behavior → likely environment, auth, or permissions  
 
-```bash
-git clone https://github.com/sefket24/support-issue-reconstructor.git
-cd support-issue-reconstructor
-```
+**Hypotheses**
+- File permissions changed  
+- Browser-specific issue  
+- Cached state causing blank screen  
+- Invalid or outdated link  
 
-### 2. Create and activate a virtual environment (recommended)
-
-```bash
-python -m venv venv
-source venv/bin/activate        # Mac/Linux
-venv\Scripts\activate           # Windows
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Add your OpenAI API key
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and replace the placeholder with your real key:
-
-```
-OPENAI_API_KEY=sk-...your-key-here...
-```
+**Steps taken**
+- Opened link in:
+  - Chrome (logged in)  
+  - Chrome (incognito)  
+  - Safari  
+- Checked file permissions  
+- Verified link format  
+- Simulated external (logged-out) access  
 
 ---
 
-## Run Locally
+### Final Output
 
-```bash
-streamlit run app.py
-```
+**Steps to Reproduce**
+1. Open shared prototype link while logged out  
+2. Observe blank screen  
 
-The app will open at `http://localhost:8501`.
+**Expected**  
+Users with the link can view the prototype  
 
----
+**Actual**  
+Logged-out users see a blank screen  
 
-## Deploy on Streamlit Cloud
+**Environment**
+- Browser: Chrome, Safari  
+- Auth state: logged out  
 
-1. Push your repo to GitHub
-2. Go to [streamlit.io/cloud](https://streamlit.io/cloud)
-3. Click **New app** → connect your GitHub account
-4. Select your repo and set `app.py` as the main file
-5. Under **Advanced settings → Secrets**, add:
+**Root Cause**  
+File restricted to internal team  
 
-```
-OPENAI_API_KEY = "sk-...your-key-here..."
-```
-
-6. Click **Deploy**
+**Resolution**  
+Updated sharing settings to allow public access  
 
 ---
 
-## Tech Stack
+### Edge Cases Considered
 
-| Layer | Tool |
-|-------|------|
-| UI | Streamlit |
-| AI | OpenAI GPT-4o-mini + GPT-4o vision |
-| Config | python-dotenv |
-| Language | Python 3.10+ |
+- Browser cache causing stale render  
+- Extension blocking content  
+- Corrupted prototype state  
 
 ---
 
-## Inspiration
+## How the App Works
 
-This project was inspired by the challenge of processing high-volume, hard-to-reproduce support tickets in complex collaborative SaaS environments. It demonstrates how a focused AI integration can meaningfully reduce manual review time, surface the right follow-up questions faster, and improve response quality at scale.
+The Streamlit app mirrors a real support workflow:
+
+1. Intake  
+   - user issue  
+   - environment  
+
+2. Investigation  
+   - hypotheses  
+   - notes  
+
+3. Output  
+   - structured issue report  
 
 ---
 
-## License
+## Why this matters
 
-MIT — free to use, modify, and build on.
+A large part of support work is not fixing bugs — it’s making them understandable.
+
+This project focuses on that translation layer between users and engineering.
+
+---
+
+## Next Improvements
+
+- Attach logs / screenshots  
+- Suggest likely root causes  
+- Track patterns across issues  
