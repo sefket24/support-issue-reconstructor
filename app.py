@@ -2,12 +2,13 @@ import streamlit as st
 
 st.set_page_config(page_title="Support Issue Reconstructor")
 
-st.title("Support Issue Reconstructor")
+st.title("I turn vague user issues into structured, reproducible bugs")
 
 st.markdown(
 """
-Paste a real user message below.  
-This tool translates unclear support tickets into structured, reproducible issues for engineering.
+Built from real support workflows.
+
+Paste a real user message below. This tool helps translate unclear tickets into structured, actionable issues for engineering.
 """
 )
 
