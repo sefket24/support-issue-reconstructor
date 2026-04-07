@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": "2024-11-14 08:02:14 UTC",
+    "actor": "automation:scheduler",
+    "action": "sync_triggered",
+    "detail": "Nightly sync initiated — pulling from upstream data source",
+    "event_id": "evt_881204"
+  },
+  {
+    "timestamp": "2024-11-14 08:04:37 UTC",
+    "actor": "user:alice",
+    "action": "record_updated",
+    "detail": "Field 'status' changed from 'pending' to 'approved'",
+    "event_id": "evt_881391"
+  },
+  {
+    "timestamp": "2024-11-14 08:07:02 UTC",
+    "actor": "automation:scheduler",
+    "action": "record_overwritten",
+    "detail": "Field 'status' reset to 'pending' — sync source treated as authoritative",
+    "event_id": "evt_881447"
+  },
+  {
+    "timestamp": "2024-11-14 08:09:55 UTC",
+    "actor": "user:bob",
+    "action": "automation_config_updated",
+    "detail": "Trigger condition updated: added filter 'status = approved'",
+    "event_id": "evt_881512"
+  },
+  {
+    "timestamp": "2024-11-14 08:11:18 UTC",
+    "actor": "system",
+    "action": "automation_skipped",
+    "detail": "Trigger condition not met — record status is 'pending', expected 'approved'",
+    "event_id": "evt_881539"
+  },
+  {
+    "timestamp": "2024-11-14 08:15:44 UTC",
+    "actor": "user:alice",
+    "action": "record_updated",
+    "detail": "Field 'status' changed to 'approved' again — user unaware of earlier overwrite",
+    "event_id": "evt_881604"
+  },
+  {
+    "timestamp": "2024-11-14 08:22:09 UTC",
+    "actor": "automation:scheduler",
+    "action": "sync_conflict",
+    "detail": "Conflict detected between local value 'approved' and remote value 'pending'",
+    "event_id": "evt_881718"
+  },
+  {
+    "timestamp": "2024-11-14 08:23:50 UTC",
+    "actor": "system",
+    "action": "cache_invalidated",
+    "detail": "Cache cleared for affected record — downstream reads will reflect latest sync result",
+    "event_id": "evt_881755"
+  }
+]
