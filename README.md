@@ -1,166 +1,164 @@
-# Support Issue Reconstructor
-## Reducing Ambiguity in Complex Support Workflows
+# 🔍 Reducing Ambiguity in Complex Support Workflows
+
+> AI-powered issue triage and response drafting for SaaS support teams — built with Python, Streamlit, and OpenAI.
+
+**Live demo:** [support-issue-reconstructor.streamlit.app](https://support-issue-reconstructor.streamlit.app/)
+
+---
+
+## Context
+
+Modern SaaS products increasingly involve:
+
+- Multiple users interacting with shared resources
+- Layered abstractions (components, automations, integrations)
+- Asynchronous changes across systems
+
+These environments make issues difficult to reproduce, attribute, and explain clearly. A single inbound ticket might touch three different subsystems, involve two user roles, and arrive with just enough detail to be confusing — but not enough to act on.
 
 ---
 
 ## Problem
 
-Modern SaaS products are multi-actor environments. Users, admins, automations, and background sync processes all interact with the same data — often within seconds of each other. When something breaks, it rarely leaves an obvious trace.
+Support teams processing high volumes of complex, ambiguous tickets face a consistent set of challenges. Manually reviewing each one is:
 
-The result is a support workflow that looks like this:
-
-- User reports something changed that shouldn't have, or something didn't happen that should have
-- Support asks for screenshots, timestamps, and steps to reproduce
-- User can't always answer those questions — they just noticed it was wrong
-- Support escalates to engineering or checks the database directly
-- 3–5 messages later, you find out an automation condition was updated by a teammate two hours before the issue started
-
-That back-and-forth is the problem. Not every case is simple enough to resolve in one message, but many are — if you could quickly reconstruct *what actually happened* before asking the user anything.
+- Time-consuming for support agents
+- Inconsistent across team members
+- Hard to scale as request volume grows
 
 ---
 
-## Observations
+## Solution
 
-After handling a large volume of complex support tickets, several patterns emerged:
+This tool provides an AI-powered first-pass review. An agent pastes an incoming ticket (or fills out the intake form), and the assistant instantly returns:
 
-**Multi-actor collisions.** Issues frequently involve more than one actor — a user makes a change, a background process runs shortly after, and the user sees the combined result as unexpected behavior. Neither action is wrong in isolation.
+- A **classification** (Actionable / Needs Clarification / Out of Scope)
+- A **reasoning summary** explaining the decision
+- A **tone analysis** of the reporter
+- A **suggested reply** ready to copy and send
+- **Tags** for categorization and routing
 
-**Silent automation and sync failures.** Automations don't always throw errors when they stop working. A trigger condition mismatch causes a silent skip. A sync job overwrites a manual edit without surfacing a conflict. The user sees a wrong value with no error message to point to.
-
-**Hard to identify what changed and when.** Even when an audit log exists, reading it to reconstruct a sequence of events requires time and context. A support engineer dealing with 40 tickets a day doesn't have either.
-
-**Reproducibility is low.** Because these issues involve specific timing, specific actors, and specific configurations, they're hard to reproduce intentionally — which makes root cause harder to confirm.
-
----
-
-## Hypothesis
-
-If we can reconstruct the likely sequence of events — even imperfectly — at the start of an investigation, we reduce the number of clarifying questions needed and get to a fix faster.
-
-A structured reconstruction, even if it's 70–80% accurate, is more useful than 3 rounds of back-and-forth, because it gives the support engineer and the user something concrete to confirm or correct. The conversation shifts from "can you describe what happened?" to "does this match what you saw?"
+This frees support agents to focus on edge cases, exceptions, and relationship-building — not repetitive triage.
 
 ---
 
-## Proposed Solution
+## How It Works
 
-**Support Issue Reconstructor** is a lightweight internal tool that takes an issue description and an optional event log and produces:
+1. The support agent fills in the intake form:
+   - Product area or context
+   - Reporter email
+   - Free-text description of the issue
+   - Checkbox confirming supporting evidence has been provided
 
-- A reconstructed event timeline showing what likely happened and in what order
-- A root cause explanation written in plain support language
-- A list of contributing factors — the conditions that made the issue possible
-- Actionable suggested fixes, ordered by specificity
-- Numbered reproduction steps that can be handed off to QA or engineering
+2. On submission, a structured prompt is sent to the OpenAI API (`gpt-4o-mini`).
 
-The tool is not trying to replace judgment. It's trying to give the support engineer a starting point — a structured hypothesis that can be confirmed, refined, or dismissed quickly.
+3. The model returns a JSON object with classification, reasoning, tone, suggested response, and tags.
 
-The analysis engine is deterministic and rule-based. It doesn't call an LLM. It uses a knowledge base built from real support patterns, mapped to issue categories. This makes it fast, auditable, and usable without any API keys or internet access.
-
----
-
-## Example Scenario
-
-### Incoming ticket
-
-> "Our approval automation stopped running. Nothing changed on our end. It was working last week."
-
-**Before this tool:**
-
-1. Support asks for the automation name and which records it's supposed to act on
-2. User shares the automation — support checks the trigger conditions
-3. Support asks when it last worked
-4. User isn't sure
-5. Support checks the audit log and finds a teammate edited the automation 3 days ago
-6. Support identifies the trigger condition change — a new filter was added that most records don't satisfy
-
-Resolution: 5 messages, 1–2 days elapsed.
-
-**After this tool:**
-
-1. Support pastes the issue description, selects "automation / workflow", generates a mock or uploads an event log
-2. Tool surfaces: `automation_config_updated` as the most suspicious event, explains that a trigger condition change could cause silent skips, and lists "check whether records satisfy all current trigger conditions" as the first fix
-3. Support goes directly to the automation audit log with a clear hypothesis
-4. Confirms the change, identifies the affected records, resolves
-
-Resolution: 1 message, same session.
+4. Results are displayed in a clean side-by-side layout with color-coded status badges.
 
 ---
 
-## Expected Impact
+## Example Input / Output
 
-- Faster time-to-first-useful-response on ambiguous tickets
-- Fewer clarifying questions needed from the user in the initial triage phase
-- Support engineers spend less time reading raw audit logs from scratch
-- Reproducible cases are documented in a standard format that engineering can act on
-- Institutional knowledge about common failure patterns is captured in the tool rather than individual engineers' heads
+**Input:**
+- Context: `Collaborative canvas tool, 12-seat team`
+- Email: `ops@examplecorp.com`
+- Message: *"One of our users says changes they made aren't showing up for others on the team. It was working yesterday. We haven't changed any settings."*
+- Evidence provided: ✅ Yes (screen recording attached)
 
----
-
-## Assumptions & Reasoning
-
-**Assumption:** Most complex support issues fall into a small number of recognizable categories — data inconsistency, permission changes, automation failures, sync/state conflicts.
-
-**Reasoning:** After handling a large volume of tickets, the same patterns recur. The specifics change but the structure doesn't. A rule-based engine trained on those patterns can get close enough to be useful without needing an LLM.
-
-**Assumption:** A partial reconstruction is more useful than no reconstruction.
-
-**Reasoning:** Even if the tool is only 70–80% accurate, it gives the support engineer a direction to look. That's faster than starting from scratch.
-
-**Assumption:** Support engineers will use it if it's fast and doesn't require setup.
-
-**Reasoning:** A tool that requires an API key, a database connection, or a lot of manual input won't get used in a high-volume support environment. This tool runs locally with no external dependencies and produces output in under a second.
+**Output:**
+```json
+{
+  "classification": "needs_clarification",
+  "reasoning": "The issue likely involves a sync or permission layer, but the ticket lacks detail on which feature area, user role affected, and whether the problem is consistent or intermittent. A targeted follow-up will accelerate resolution.",
+  "tone": "Calm but concerned — reporting on behalf of another user",
+  "suggested_response": "Thanks for reaching out and for attaching the recording — that's helpful. To investigate further, could you confirm which canvas feature this affects and whether the issue is happening for all team members or just one? Once we have that, we can identify whether this is a sync, permission, or session issue and get it resolved quickly.",
+  "tags": ["sync-issue", "multi-user", "needs-repro-steps", "collaborative-feature"]
+}
+```
 
 ---
 
-## Validation Plan
+## Setup Instructions
 
-1. **Pilot with known cases.** Run the tool against 10–15 resolved tickets where the root cause is already confirmed. Measure how close the tool's output is to the actual cause.
-
-2. **Track time-to-resolution on new tickets.** Compare resolution time for tickets where the tool was used vs. tickets handled without it.
-
-3. **Collect support engineer feedback.** After each use, ask: was the reconstruction useful? Did it point in the right direction? What was missing?
-
-4. **Iterate on the knowledge base.** As new patterns emerge, add them to the analyzer. The tool gets more accurate over time without requiring a model retrain.
-
----
-
-## Demo Instructions
-
-### Run locally
+### 1. Clone the repository
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-username/support-issue-reconstructor.git
+git clone https://github.com/sefket24/support-issue-reconstructor.git
 cd support-issue-reconstructor
+```
 
-# Install dependencies
+### 2. Create and activate a virtual environment (recommended)
+
+```bash
+python -m venv venv
+source venv/bin/activate        # Mac/Linux
+venv\Scripts\activate           # Windows
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-# Run the app
+### 4. Add your OpenAI API key
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and replace the placeholder with your real key:
+
+```
+OPENAI_API_KEY=sk-...your-key-here...
+```
+
+---
+
+## Run Locally
+
+```bash
 streamlit run app.py
 ```
 
-The app opens in your browser at `http://localhost:8501`.
-
-**To test with a real event log:** Upload any JSON array of event objects using the file uploader. Each event should have `timestamp`, `actor`, `action`, and `detail` fields. See `/data/mock_events.json` for the expected format.
-
-**To test without an event log:** Leave the checkbox enabled — the tool will generate a realistic mock event log based on the issue category you selected.
-
-### Sample cases
-
-Pre-built test cases are available in `/examples/sample_cases.json`. Each case includes a realistic issue description, a structured event log, and the expected output for validation.
+The app will open at `http://localhost:8501`.
 
 ---
 
-### Live Demo
+## Deploy on Streamlit Cloud
 
-This app is deployed via Streamlit Community Cloud.
+1. Push your repo to GitHub
+2. Go to [streamlit.io/cloud](https://streamlit.io/cloud)
+3. Click **New app** → connect your GitHub account
+4. Select your repo and set `app.py` as the main file
+5. Under **Advanced settings → Secrets**, add:
 
-👉 [https://support-issue-reconstructor.streamlit.app](https://support-issue-reconstructor.streamlit.app)
+```
+OPENAI_API_KEY = "sk-...your-key-here..."
+```
+
+6. Click **Deploy**
 
 ---
 
-## Notes
+## Tech Stack
 
-This project is based on common patterns observed in complex SaaS support environments. A more tailored version — with category definitions, event types, and knowledge base entries specific to your product — can be shared upon request.
+| Layer | Tool |
+|-------|------|
+| UI | Streamlit |
+| AI | OpenAI GPT-4o-mini + GPT-4o vision |
+| Config | python-dotenv |
+| Language | Python 3.10+ |
 
-The knowledge base lives in `logic/analyzer.py` and `logic/classifier.py`. Both files are structured to make it straightforward to add new categories, event types, and fix suggestions without touching the rest of the codebase.
+---
+
+## Inspiration
+
+This project was inspired by the challenge of processing high-volume, hard-to-reproduce support tickets in complex collaborative SaaS environments. It demonstrates how a focused AI integration can meaningfully reduce manual review time, surface the right follow-up questions faster, and improve response quality at scale.
+
+---
+
+## License
+
+MIT — free to use, modify, and build on.
