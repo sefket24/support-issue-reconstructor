@@ -10,16 +10,16 @@ load_dotenv()
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Nonprofit Discount Assistant",
-    page_icon="🤝",
+    page_title="Support Issue Reconstructor",
+    page_icon="🔍",
     layout="wide",
 )
 
 # ── Session state for stats ───────────────────────────────────────────────────
 if "total_requests" not in st.session_state:
     st.session_state.total_requests = 0
-if "eligible_count" not in st.session_state:
-    st.session_state.eligible_count = 0
+if "actionable_count" not in st.session_state:
+    st.session_state.actionable_count = 0
 if "last_process_time" not in st.session_state:
     st.session_state.last_process_time = None
 
@@ -28,8 +28,13 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
-    html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; }
-    .stApp { background-color: #f4f3ef; }
+    html, body, [class*="css"] {
+        font-family: 'IBM Plex Sans', sans-serif;
+        color: #1a1a1a;
+    }
+    .stApp {
+        background-color: #f4f3ef !important;
+    }
     h1, h2, h3 { font-family: 'IBM Plex Mono', monospace; }
 
     .block-container {
@@ -67,6 +72,46 @@ st.markdown("""
         font-family: 'IBM Plex Mono', monospace;
         font-size: 0.7rem; color: #666;
     }
+
+    /* ── Portfolio banner ── */
+    .portfolio-banner {
+        background: #fffdf0;
+        border: 1px solid #f0e68c;
+        border-left: 4px solid #c8f55a;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .portfolio-banner-text {
+        font-size: 0.85rem;
+        color: #444;
+        line-height: 1.5;
+    }
+    .portfolio-banner-text strong {
+        color: #111;
+        font-weight: 600;
+    }
+    .portfolio-links {
+        display: flex;
+        gap: 0.6rem;
+        white-space: nowrap;
+    }
+    .portfolio-link {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        border: 1px solid #d4d0c8;
+        color: #333;
+        background: #fff;
+    }
+    .portfolio-link:hover { background: #111; color: #c8f55a; border-color: #111; }
 
     /* ── Stat cards ── */
     .stats-row {
@@ -130,9 +175,9 @@ st.markdown("""
     .doc-unverified { background:#fff7d4; border:1px solid #f0d890; border-radius:8px; padding:0.6rem 1rem; font-size:0.82rem; color:#7a5c00; font-family:'IBM Plex Mono',monospace; margin-bottom:1rem; }
 
     /* ── Status badges ── */
-    .status-eligible    { display:inline-block; background:#d4f7d4; color:#1a6b1a; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 14px; border-radius:6px; border:1px solid #a8e6a8; }
-    .status-needs-review{ display:inline-block; background:#fff7d4; color:#7a5c00; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 14px; border-radius:6px; border:1px solid #f0d890; }
-    .status-not-eligible{ display:inline-block; background:#fde8e8; color:#8b1a1a; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 14px; border-radius:6px; border:1px solid #f0a8a8; }
+    .status-actionable   { display:inline-block; background:#d4f7d4; color:#1a6b1a; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 14px; border-radius:6px; border:1px solid #a8e6a8; }
+    .status-needs-review { display:inline-block; background:#fff7d4; color:#7a5c00; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 14px; border-radius:6px; border:1px solid #f0d890; }
+    .status-out-of-scope { display:inline-block; background:#fde8e8; color:#8b1a1a; font-family:'IBM Plex Mono',monospace; font-size:0.8rem; font-weight:600; padding:6px 14px; border-radius:6px; border:1px solid #f0a8a8; }
 
     /* ── Confidence bar ── */
     .confidence-wrap { margin: 0.75rem 0 1rem; }
@@ -205,62 +250,25 @@ st.markdown("""
         font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem;
     }
 
-    /* ── Portfolio banner ── */
-    .portfolio-banner {
-        background: #fffdf0;
-        border: 1px solid #f0e68c;
-        border-left: 4px solid #c8f55a;
-        border-radius: 8px;
-        padding: 0.75rem 1.25rem;
-        margin-bottom: 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-    .portfolio-banner-text {
-        font-size: 0.85rem;
-        color: #444;
-        line-height: 1.5;
-    }
-    .portfolio-banner-text strong {
-        color: #111;
-        font-weight: 600;
-    }
-    .portfolio-links {
-        display: flex;
-        gap: 0.6rem;
-        white-space: nowrap;
-    }
-    .portfolio-link {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.7rem;
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 5px;
-        text-decoration: none;
-        border: 1px solid #d4d0c8;
-        color: #333;
-        background: #fff;
-    }
-    .portfolio-link:hover { background: #111; color: #c8f55a; border-color: #111; }
-
     /* ── Streamlit overrides ── */
     .stButton > button {
-        background: #111; color: #f4f3ef;
-        border: none; border-radius: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.85rem; font-weight: 600;
-        padding: 0.6rem 1.5rem; width: 100%;
-        letter-spacing: 0.5px; transition: all 0.15s;
+        background: #111 !important; color: #f4f3ef !important;
+        border: none !important; border-radius: 8px !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 0.85rem !important; font-weight: 600 !important;
+        padding: 0.6rem 1.5rem !important; width: 100% !important;
+        letter-spacing: 0.5px !important;
     }
-    .stButton > button:hover { background: #333; color: #c8f55a; }
+    .stButton > button:hover { background: #333 !important; color: #c8f55a !important; }
 
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        border-radius: 8px; border: 1px solid #d4d0c8;
-        font-family: 'IBM Plex Sans', sans-serif;
-        font-size: 0.9rem; background: #fafaf8;
+        border-radius: 8px !important;
+        border: 1px solid #d4d0c8 !important;
+        font-family: 'IBM Plex Sans', sans-serif !important;
+        font-size: 0.9rem !important;
+        background: #fafaf8 !important;
+        color: #1a1a1a !important;
     }
     .stCheckbox > label { font-size: 0.88rem; color: #444; }
 
@@ -269,46 +277,6 @@ st.markdown("""
         border-radius: 8px !important;
         background: #fafaf8 !important;
     }
-
-    /* ── Portfolio banner ── */
-    .portfolio-banner {
-        background: #fffdf0;
-        border: 1px solid #f0e68c;
-        border-left: 4px solid #c8f55a;
-        border-radius: 8px;
-        padding: 0.75rem 1.25rem;
-        margin-bottom: 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-    .portfolio-banner-text {
-        font-size: 0.85rem;
-        color: #444;
-        line-height: 1.5;
-    }
-    .portfolio-banner-text strong {
-        color: #111;
-        font-weight: 600;
-    }
-    .portfolio-links {
-        display: flex;
-        gap: 0.6rem;
-        white-space: nowrap;
-    }
-    .portfolio-link {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 0.7rem;
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 5px;
-        text-decoration: none;
-        border: 1px solid #d4d0c8;
-        color: #333;
-        background: #fff;
-    }
-    .portfolio-link:hover { background: #111; color: #c8f55a; border-color: #111; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -317,8 +285,8 @@ st.markdown("""
 st.markdown("""
 <div class="nav-bar">
     <div class="nav-brand">
-        <span style="font-size:1.3rem">🤝</span>
-        <h1>Nonprofit Discount Assistant</h1>
+        <span style="font-size:1.3rem">🔍</span>
+        <h1>Support Issue Reconstructor</h1>
         <span class="nav-badge">AI-Powered</span>
     </div>
     <div class="nav-meta">Support Ops · Internal Tool</div>
@@ -326,24 +294,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ── Portfolio banner ─────────────────────────────────────────────────────────
-st.markdown("""
-<div class="portfolio-banner">
-    <div class="portfolio-banner-text">
-        👋 <strong>Hey, hiring team!</strong> This is a portfolio project by <strong>Sef Nouri</strong> —
-        a working AI app that simulates how SaaS support teams could reduce ambiguity in complex,
-        hard-to-reproduce support tickets using LLM-based triage, tone analysis, and response drafting.
-        Feel free to test it with a real request.
-    </div>
-    <div class="portfolio-links">
-        <a class="portfolio-link" href="https://github.com/sefket24/nonprofit-discount-assistant" target="_blank">⌥ GitHub</a>
-        <a class="portfolio-link" href="https://www.linkedin.com/in/sefketnouri" target="_blank">in LinkedIn</a>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-
-# ── Portfolio banner ─────────────────────────────────────────────────────────
+# ── Portfolio banner ──────────────────────────────────────────────────────────
 st.markdown("""
 <div class="portfolio-banner">
     <div class="portfolio-banner-text">
@@ -361,22 +312,22 @@ st.markdown("""
 
 
 # ── Stats row ─────────────────────────────────────────────────────────────────
-total    = st.session_state.total_requests
-eligible = st.session_state.eligible_count
-rate     = f"{int(eligible/total*100)}%" if total > 0 else "—"
-proc_t   = f"{st.session_state.last_process_time:.1f}s" if st.session_state.last_process_time else "—"
+total      = st.session_state.total_requests
+actionable = st.session_state.actionable_count
+rate       = f"{int(actionable/total*100)}%" if total > 0 else "—"
+proc_t     = f"{st.session_state.last_process_time:.1f}s" if st.session_state.last_process_time else "—"
 
 st.markdown(f"""
 <div class="stats-row">
     <div class="stat-card">
-        <div class="stat-label">Requests Processed</div>
+        <div class="stat-label">Tickets Processed</div>
         <div class="stat-value">{total}</div>
         <div class="stat-sub">this session</div>
     </div>
     <div class="stat-card">
-        <div class="stat-label">Approval Rate</div>
+        <div class="stat-label">Actionable Rate</div>
         <div class="stat-value">{rate}</div>
-        <div class="stat-sub">eligible classifications</div>
+        <div class="stat-sub">clear next-step classifications</div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Avg Process Time</div>
@@ -402,9 +353,9 @@ def verify_document(client, b64, mime):
     if mime == "application/pdf":
         content = [
             {"type": "text", "text": (
-                "This document was uploaded as proof of nonprofit status. "
-                "Does it appear to be a legitimate nonprofit verification document "
-                "(e.g. IRS 501c3 determination letter, EIN letter, charity registration)? "
+                "This document was uploaded as supporting evidence for a support ticket. "
+                "Does it appear to be a legitimate document relevant to a SaaS support issue "
+                "(e.g. screenshot, error log, configuration export)? "
                 "Reply ONLY with JSON: {\"verified\": true/false, \"doc_summary\": \"one sentence\"}"
             )},
             {"type": "document", "source": {"type": "base64", "media_type": mime, "data": b64}}
@@ -412,9 +363,9 @@ def verify_document(client, b64, mime):
     else:
         content = [
             {"type": "text", "text": (
-                "This image was uploaded as proof of nonprofit status. "
-                "Does it appear to be a legitimate nonprofit verification document "
-                "(e.g. IRS 501c3 determination letter, EIN letter, charity registration)? "
+                "This image was uploaded as supporting evidence for a support ticket. "
+                "Does it appear to be a legitimate document relevant to a SaaS support issue "
+                "(e.g. screenshot, error log, configuration export)? "
                 "Reply ONLY with JSON: {\"verified\": true/false, \"doc_summary\": \"one sentence\"}"
             )},
             {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}}
@@ -432,7 +383,7 @@ def verify_document(client, b64, mime):
     return json.loads(raw.strip())
 
 
-def analyze_request(org_name, email, message, has_proof, doc_verified=False, doc_summary=""):
+def analyze_request(product_area, email, message, has_attachment, doc_verified=False, doc_summary=""):
     api_key = os.getenv("OPENAI_API_KEY", "")
     if not api_key:
         st.error("⚠️  OPENAI_API_KEY not found.")
@@ -443,34 +394,35 @@ def analyze_request(org_name, email, message, has_proof, doc_verified=False, doc
     doc_context = ""
     if doc_summary:
         status = "VERIFIED" if doc_verified else "UNVERIFIED"
-        doc_context = f"\nDocument: {doc_summary} [{status}]"
+        doc_context = f"\nAttachment: {doc_summary} [{status}]"
 
-    prompt = f"""You are a SaaS support agent reviewing a nonprofit discount request.
+    prompt = f"""You are a senior SaaS support agent triaging a complex, potentially hard-to-reproduce support ticket.
 
-Organization: {org_name}
-Email: {email}
-Proof checkbox: {has_proof}{doc_context}
+Product area / context: {product_area}
+Reporter email: {email}
+Attachment provided: {has_attachment}{doc_context}
 
-Message:
+Ticket message:
 \"\"\"{message}\"\"\"
 
 Return ONLY a valid JSON object with these exact fields:
 {{
-  "classification": "eligible" | "needs_more_info" | "not_eligible",
+  "classification": "actionable" | "needs_clarification" | "out_of_scope",
   "confidence": <integer 0-100>,
-  "reasoning": "2-3 sentence explanation",
-  "tone": "brief tone description",
+  "reasoning": "2-3 sentence explanation of the triage decision",
+  "tone": "brief tone description of the reporter",
   "risk_flags": ["flag1", "flag2"],
-  "suggested_response": "warm professional reply 3-5 sentences",
+  "suggested_response": "warm professional reply 3-5 sentences with clear next steps",
   "tags": ["tag1", "tag2", "tag3"]
 }}
 
 Rules:
-- classification eligible: doc verified AND clear nonprofit mission
-- classification needs_more_info: missing doc, unverified doc, or unclear mission
-- classification not_eligible: commercial/for-profit signals
-- confidence: your certainty in the classification (0=very unsure, 100=certain)
-- risk_flags: list 0-3 specific concerns (e.g. "domain mismatch", "vague mission", "no EIN mentioned", "commercial language detected"). Empty list [] if none.
+- classification actionable: issue is clear enough to investigate or reproduce immediately
+- classification needs_clarification: missing repro steps, unclear scope, multi-user ambiguity, or insufficient context
+- classification out_of_scope: feature request, billing issue, or unrelated to the product
+- confidence: certainty in the classification (0=very unsure, 100=certain)
+- risk_flags: 0-3 specific concerns (e.g. "missing repro steps", "multi-user scope unclear", "async timing issue", "no error message provided", "affects multiple accounts"). Empty list [] if none.
+- suggested_response: ask targeted clarifying questions if needs_clarification; provide next steps if actionable
 """
 
     response = client.chat.completions.create(
@@ -491,47 +443,47 @@ left_col, right_col = st.columns([1, 1], gap="large")
 
 with left_col:
     st.markdown('<div class="form-card">', unsafe_allow_html=True)
-    st.markdown("#### 📋 Discount Request Form")
+    st.markdown("#### 📋 Ticket Intake Form")
     st.markdown("---")
 
-    org_name = st.text_input("Organization Name", placeholder="e.g. Green Earth Foundation")
-    email    = st.text_input("Contact Email", placeholder="e.g. hello@greenearth.org")
-    message  = st.text_area(
-        "Request Message",
-        placeholder="Describe your organization's mission and why you're requesting a nonprofit discount...",
+    product_area = st.text_input("Product Area / Context", placeholder="e.g. Collaborative canvas, CRM automation, no-code workflow builder")
+    email        = st.text_input("Reporter Email", placeholder="e.g. user@company.com")
+    message      = st.text_area(
+        "Ticket Message",
+        placeholder="Paste the support ticket or describe the issue — include any error messages, steps taken, and who is affected...",
         height=150,
     )
 
-    st.markdown("**Proof of Nonprofit Status**")
-    st.caption("Upload your 501(c)(3) letter, EIN document, or equivalent. Accepts PDF, PNG, JPG.")
+    st.markdown("**Supporting Evidence**")
+    st.caption("Upload a screenshot, error log, or exported config. Accepts PDF, PNG, JPG.")
     uploaded_doc = st.file_uploader(
-        "Upload document",
+        "Upload attachment",
         type=["pdf", "png", "jpg", "jpeg"],
         label_visibility="collapsed",
     )
 
-    has_proof = st.checkbox("✅ I confirm this document is authentic and belongs to our organization")
+    has_attachment = st.checkbox("✅ Supporting evidence has been attached or is available on request")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    submit = st.button("🔍 Analyze Eligibility")
+    submit = st.button("🔍 Reconstruct & Triage Issue")
     st.markdown('</div>', unsafe_allow_html=True)
 
 
 with right_col:
     st.markdown('<div class="result-card">', unsafe_allow_html=True)
-    st.markdown("#### 📊 Eligibility Analysis")
+    st.markdown("#### 📊 Triage Analysis")
     st.markdown("---")
 
     if not submit:
         st.markdown("""
         <div class="result-placeholder">
-            Submit a request to see<br>the AI analysis here.
+            Submit a ticket to see<br>the AI triage analysis here.
         </div>
         """, unsafe_allow_html=True)
 
     else:
-        if not org_name.strip() or not message.strip():
-            st.warning("Please fill in Organization Name and Request Message.")
+        if not product_area.strip() or not message.strip():
+            st.warning("Please fill in Product Area and Ticket Message.")
         else:
             api_key = os.getenv("OPENAI_API_KEY", "")
             if not api_key:
@@ -548,32 +500,32 @@ with right_col:
             step1_class = "step-active" if has_doc else "step-pending"
             st.markdown(f"""
             <div class="step-row">
-                <div class="step {step1_class}">① Doc Verify</div>
-                <div class="step step-active">② AI Analysis</div>
+                <div class="step {step1_class}">① Attachment</div>
+                <div class="step step-active">② AI Triage</div>
                 <div class="step step-pending">③ Complete</div>
             </div>
             """, unsafe_allow_html=True)
 
-            # ── Step 1: document verification ──
+            # ── Step 1: attachment verification ──
             if has_doc:
-                with st.spinner("🔎 Verifying document with GPT-4o vision..."):
+                with st.spinner("🔎 Analysing attachment with GPT-4o vision..."):
                     try:
-                        b64, mime   = encode_file(uploaded_doc)
-                        doc_result  = verify_document(client, b64, mime)
+                        b64, mime    = encode_file(uploaded_doc)
+                        doc_result   = verify_document(client, b64, mime)
                         doc_verified = doc_result.get("verified", False)
-                        doc_summary  = doc_result.get("doc_summary", "Document uploaded")
+                        doc_summary  = doc_result.get("doc_summary", "Attachment uploaded")
                     except Exception as e:
-                        st.warning(f"Document verification failed: {e}")
+                        st.warning(f"Attachment analysis failed: {e}")
 
                 if doc_verified:
-                    st.markdown(f'<div class="doc-verified">✅ Verified — {doc_summary}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="doc-verified">✅ Attachment recognised — {doc_summary}</div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="doc-unverified">⚠️ Not verified — {doc_summary}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="doc-unverified">⚠️ Attachment unclear — {doc_summary}</div>', unsafe_allow_html=True)
 
-            # ── Step 2: analyze ──
-            with st.spinner("🤖 Analyzing eligibility..."):
+            # ── Step 2: triage ──
+            with st.spinner("🤖 Triaging issue..."):
                 try:
-                    result = analyze_request(org_name, email, message, has_proof, doc_verified, doc_summary)
+                    result = analyze_request(product_area, email, message, has_attachment, doc_verified, doc_summary)
                 except json.JSONDecodeError:
                     st.error("Unexpected AI response format. Please try again.")
                     st.stop()
@@ -584,30 +536,29 @@ with right_col:
             t_elapsed = time.time() - t_start
             st.session_state.total_requests += 1
             st.session_state.last_process_time = t_elapsed
-            if result.get("classification") == "eligible":
-                st.session_state.eligible_count += 1
+            if result.get("classification") == "actionable":
+                st.session_state.actionable_count += 1
 
-            # ── Step 3 complete — re-render steps ──
-            step1_done = "step-done" if has_doc else "step-pending"
-            doc_ok     = "step-done" if doc_verified else ("step-error" if has_doc else "step-pending")
+            # ── Step 3 complete ──
+            doc_ok = "step-done" if doc_verified else ("step-error" if has_doc else "step-pending")
             st.markdown(f"""
             <div class="step-row">
-                <div class="step {doc_ok}">① Doc Verify</div>
-                <div class="step step-done">② AI Analysis</div>
+                <div class="step {doc_ok}">① Attachment</div>
+                <div class="step step-done">② AI Triage</div>
                 <div class="step step-done">③ Complete</div>
             </div>
             """, unsafe_allow_html=True)
 
             # ── Classification + confidence ──
-            classification = result.get("classification", "needs_more_info")
+            classification = result.get("classification", "needs_clarification")
             confidence     = result.get("confidence", 50)
 
-            if classification == "eligible":
-                badge = '<span class="status-eligible">✅ Eligible</span>'
-            elif classification == "not_eligible":
-                badge = '<span class="status-not-eligible">❌ Not Eligible</span>'
+            if classification == "actionable":
+                badge = '<span class="status-actionable">✅ Actionable</span>'
+            elif classification == "out_of_scope":
+                badge = '<span class="status-out-of-scope">❌ Out of Scope</span>'
             else:
-                badge = '<span class="status-needs-review">⚠️ Needs Review</span>'
+                badge = '<span class="status-needs-review">⚠️ Needs Clarification</span>'
 
             st.markdown(badge, unsafe_allow_html=True)
 
@@ -635,14 +586,14 @@ with right_col:
             st.markdown(f"<p style='font-size:0.88rem;color:#333;line-height:1.65;margin:0'>{result.get('reasoning','')}</p>", unsafe_allow_html=True)
 
             # ── Tone ──
-            st.markdown('<div class="section-label">Request Tone</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-label">Reporter Tone</div>', unsafe_allow_html=True)
             st.markdown(f"<p style='font-size:0.88rem;color:#666;font-style:italic;margin:0'>{result.get('tone','')}</p>", unsafe_allow_html=True)
 
             # ── Suggested response + copy button ──
             st.markdown('<div class="section-label">Suggested Response</div>', unsafe_allow_html=True)
             suggested = result.get("suggested_response", "")
             st.markdown(f'<div class="response-box">{suggested}</div>', unsafe_allow_html=True)
-            st.code(suggested, language=None)  # gives a native copy button
+            st.code(suggested, language=None)
 
             # ── Tags ──
             tags = result.get("tags", [])
@@ -659,7 +610,7 @@ with right_col:
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align:center;font-size:0.72rem;color:#bbb;font-family:IBM Plex Mono,monospace'>"
-    "AI Nonprofit Discount Assistant · Streamlit + OpenAI GPT-4o · Internal Support Tool"
+    "Support Issue Reconstructor · Streamlit + OpenAI GPT-4o · Internal Support Tool"
     "</p>",
     unsafe_allow_html=True,
 )
